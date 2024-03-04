@@ -156,9 +156,9 @@ done
 tmp_bin="$(mktemp -d)" && export tmp_bin="$tmp_bin"
 export PATH="$tmp_bin:$PATH"
 #anew
-if ! command -v anew >/dev/null 2>&1; then
-   curl -qfsSL "https://bin.ajam.dev/x86_64_Linux/anew" -o "$tmp_bin/anew"
-   chmod +xwr "$tmp_bin/anew"
+if ! command -v anew-rs >/dev/null 2>&1; then
+   curl -qfsSL "https://bin.ajam.dev/x86_64_Linux/anew-rs" -o "$tmp_bin/anew-rs"
+   chmod +xwr "$tmp_bin/anew-rs"
 fi
 if ! command -v dos2unix >/dev/null 2>&1; then
    echo "dos2unix is not installed"
@@ -176,7 +176,7 @@ if ! command -v massdns >/dev/null 2>&1; then
    chmod +xwr "$tmp_bin/massdns"
 else
    #Just in case, sometool do not accept non-standard path
-   cp $(which massdns) "$tmp_bin/massdns" ; chmod +xwr "$tmp_bin/massdns" 
+   cp "$(which massdns)" "$tmp_bin/massdns" ; chmod +xwr "$tmp_bin/massdns" 
 fi
 #puredns
 if ! command -v puredns >/dev/null 2>&1; then
@@ -327,7 +327,7 @@ resolve_with_dnsx(){
         dnsx -disable-update-check -list "$domains_file" -resolver "$resolvers_ipv4" -rate-limit "$rate_limit" -wildcard-threshold "$wildcard_limit" -silent -output "$dnsx_tmp_out"
      fi   
       # Filter 
-     sort -u "$dnsx_tmp_out" | anew -q "$output_file"
+     sort -u "$dnsx_tmp_out" | anew-rs -q "$output_file"
      sort -u "$output_file" -o "$output_file"
      echo -e "\nTotal Resolved Domains : $(wc -l < $output_file)"     
 }
@@ -349,7 +349,7 @@ resolve_with_puredns(){
        puredns resolve "$domains_file" --resolvers "$resolvers_ipv4" --skip-sanitize --rate-limit "$rate_limit" --wildcard-tests "$wildcard_limit" --write "$puredns_tmp_out"
      fi  
    # Filter 
-     sort -u "$puredns_tmp_out" | anew -q "$output_file"
+     sort -u "$puredns_tmp_out" | anew-rs -q "$output_file"
      sort -u "$output_file" -o "$output_file"
      echo -e "\nTotal Resolved Domains : $(wc -l < $output_file)" 
 }
@@ -385,7 +385,7 @@ resolve_with_shuffledns(){
         fi
     done
    # Filter 
-     find "$tmp_shuff_dir" -type f -name '*.txt' -exec cat {} + | sort -u | anew -q "$output_file"
+     find "$tmp_shuff_dir" -type f -name '*.txt' -exec cat {} + | sort -u | anew-rs -q "$output_file"
      sort -u "$output_file" -o "$output_file"
      echo -e "\nTotal Resolved Domains : $(wc -l < $output_file)"    
 }
