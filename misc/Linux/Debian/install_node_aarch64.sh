@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-# bash <(curl -qfsSL "https://raw.githubusercontent.com/Azathothas/Arsenal/main/misc/Linux/Debian/install_node_x86_64.sh")
-# bash <(curl -qfsSL "https://pub.ajam.dev/repos/Azathothas/Arsenal/misc/Linux/Debian/install_node_x86_64.sh")
+# bash <(curl -qfsSL "https://raw.githubusercontent.com/Azathothas/Arsenal/main/misc/Linux/Debian/install_node_aarch64.sh")
+# bash <(curl -qfsSL "https://pub.ajam.dev/repos/Azathothas/Arsenal/misc/Linux/Debian/install_node_aarch64.sh")
 
 #--------------#
 #Get Latest Tar
 echo -e "\n[+] Installing NodeJS\n"
 pushd "$(mktemp -d)" > /dev/null 2>&1
-curl -qfsSLJO "https://nodejs.org/dist/latest/$(curl -qfsSL "https://nodejs.org/dist/latest/" | grep -o 'href="[^"]*"' | sed 's/href="//' | grep 'linux-x64.tar.xz' | sed 's/"$//' | sort | tail -n 1)"
+curl -qfsSLJO "https://nodejs.org/dist/latest/$(curl -qfsSL "https://nodejs.org/dist/latest/" | grep -o 'href="[^"]*"' | sed 's/href="//' | grep 'linux-arm64.tar.xz' | sed 's/"$//' | sort | tail -n 1)"
 find . -type f -name '*.xz' -exec tar -xf {} \; && find . -type f -name '*.xz' -exec rm {} -rf \; && cd "$(ls -d */)"
 #Copy to /usr/* && /usr/local/*
 sudo rsync --archive --checksum --human-readable --progress --quiet "./bin/" "/usr/bin/"
