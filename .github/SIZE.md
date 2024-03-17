@@ -13,7 +13,7 @@
 744K   │ └─┬ nmap
 732K   │   ├── Services.md
 8.0K   │   └── README.md
-344K   ├─┬ misc
+360K   ├─┬ misc
  88K   │ ├─┬ Linux
  80K   │ │ ├─┬ Debian
  16K   │ │ │ ├── install_bb_tools_x86_64.sh
@@ -27,27 +27,29 @@
 4.0K   │ │ │ ├── install_chrome_aarch64.sh
 4.0K   │ │ │ └── bootstrap.sh
 4.0K   │ │ └── TIPS_TRICKS.md
- 80K   │ ├─┬ Github
- 76K   │ │ └─┬ Runners
- 48K   │ │   ├─┬ Ubuntu
+ 88K   │ ├─┬ Github
+ 84K   │ │ └─┬ Runners
+ 56K   │ │   ├─┬ Ubuntu
+ 20K   │ │   │ ├── 0xf_gh_runner_ubuntu_debug.yaml
  16K   │ │   │ ├── 0xf_gh_runner_ubuntu_ng_no_ts_debug.yaml
- 16K   │ │   │ ├── 0xf_gh_runner_ubuntu_debug.yaml
 8.0K   │ │   │ ├── ngrok_tg_ssh.sh
+4.0K   │ │   │ ├── ipv6_warp.sh
 4.0K   │ │   │ └── debloat.sh
  16K   │ │   ├─┬ Windows
  12K   │ │   │ └── 0xf_gh_runner_windows_debug.yaml
 8.0K   │ │   └─┬ macOS
 4.0K   │ │     └── 0xf_gh_runner_macos_debug.yaml
+ 36K   │ ├─┬ WSL
+ 24K   │ │ ├─┬ Debian
+8.0K   │ │ │ ├── customize.sh
+8.0K   │ │ │ ├── README.md
+4.0K   │ │ │ └── starship.toml
+8.0K   │ │ └── README.md
  32K   │ ├─┬ Windows
  24K   │ │ ├─┬ scripts
  16K   │ │ │ ├── git_backup_windows.ps1
 4.0K   │ │ │ └── README.md
 4.0K   │ │ └── TIPS_TRICKS.md
- 28K   │ ├─┬ WSL
- 20K   │ │ ├─┬ Debian
-8.0K   │ │ │ ├── customize.sh
-8.0K   │ │ │ └── README.md
-4.0K   │ │ └── README.md
  24K   │ ├─┬ VMware
  12K   │ │ ├─┬ Parrot_Minimal
 8.0K   │ │ │ └── README.md
