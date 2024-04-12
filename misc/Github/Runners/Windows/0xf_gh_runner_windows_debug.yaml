@@ -24,7 +24,7 @@ jobs:
     #Default Timeout= 6 Hr (360 Mins) : https://nesin.io/blog/github-action-timeout
     #Docs: https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration
     #It's best to cause this timeout from your own side (Low to No chance of GH Disabling your repo) rather than gh (High Chance of them disabling your repo)
-    timeout-minutes: 350
+    timeout-minutes: 390
     
     steps:
      #Sys Info, primarily for debug
@@ -62,41 +62,6 @@ jobs:
           Start-Sleep -Seconds 2
           Start-Process -NoNewWindow -FilePath "C:\Program Files\Tailscale\tailscale.exe" -ArgumentList "up", "--unattended", --hostname="${{ env.THOST }}", --authkey="${{ secrets.TSKEY }}"
         continue-on-error: true
-        
-    #https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse?tabs=powershell
-    #You must have provided a direct URL containing your SSH Public keys, else this won't work
-    # Smth to try: https://github.com/euske/pyrexecd
-    #            : https://github.com/ferama/rospo
-      - name: Configure SSH 
-        run: |      
-         # TailScale SSH is not supported on windows: https://github.com/tailscale/tailscale/issues/4697
-         # Instead rely on a manual approach
-          Add-WindowsCapability -Online -Name OpenSSH.Server*
-          choco install openssh -y | Out-Null
-         #Start Service
-          . "C:\Program Files\OpenSSH-Win64\install-sshd.ps1"
-          . "C:\Program Files\OpenSSH-Win64\ssh-keygen.exe" -A
-          Start-Process -Wait -FilePath "C:\Program Files\OpenSSH-Win64\sshd.exe" -WindowStyle Hidden
-          Start-Sleep 5
-         #Fix Perms 
-          #https://github.com/PowerShell/Win32-OpenSSH/wiki/OpenSSH-utility-scripts-to-fix-file-permissions
-          . "C:\Program Files\OpenSSH-Win64\FixHostFilePermissions.ps1" -Confirm:$false | Out-Null
-          . "C:\Program Files\OpenSSH-Win64\FixUserFilePermissions.ps1" -Confirm:$false | Out-Null
-         #Add Public SSH Key
-          New-Item -Path "$env:USERPROFILE\.ssh" -ItemType Directory -Force
-          #Add-Content -Path "$env:USERPROFILE\.ssh\authorized_keys" -Value "$((Invoke-RestMethod -Uri "${{ env.SSH_PUBLIC_KEY_URL }}").Split("`n")[1])"
-          (Invoke-RestMethod -Uri "${{ env.SSH_PUBLIC_KEY_URL }}").Split("`n") | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace($_)) { Add-Content -Path "$env:USERPROFILE\.ssh\authorized_keys" -Value $_ } }
-         #Configure SSH Config
-          $filePath = Join-Path $env:ProgramData "ssh\sshd_config"; if (-not (Test-Path $filePath)) { New-Item -Path (Split-Path $filePath) -Name "sshd_config" -ItemType File }; Add-Content -Path $filePath -Value "PasswordAuthentication yes`nAllowTcpForwarding yes`nPubkeyAuthentication yes"
-         #Configure Firewall
-          New-NetFirewallRule -Protocol TCP -LocalPort 22 -Direction Inbound -Action Allow -DisplayName "OpenSSH-Server-In-TCP"
-          New-NetFirewallRule -Protocol TCP -LocalPort 22 -Direction Outbound -Action Allow -DisplayName "OpenSSH-Server-Out-TCP"
-          New-NetFirewallRule -Protocol TCP -LocalPort 22 -Direction Inbound -Action Allow -DisplayName "OpenSSH-Server-In-TCP-EdgeTraversal" -EdgeTraversalPolicy Allow
-          if (!(Get-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -ErrorAction SilentlyContinue | Select-Object Name, Enabled)) {Write-Output "Firewall Rule 'OpenSSH-Server-In-TCP' does not exist, creating it..." New-NetFirewallRule -Name 'OpenSSH-Server-In-TCP' -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22} else {Write-Output "Firewall rule 'OpenSSH-Server-In-TCP' has been created and exists."} 
-          netsh firewall show state
-          ipconfig
-          arp -A
-        continue-on-error: true
 
      #Connects TailScale and prints details (Okay to expose Publicly)   
       - name: Print Connection Details
@@ -123,20 +88,290 @@ jobs:
          Write-Host "`n"
         continue-on-error: true
 
+      - name: Setup Build Env
+        run: |
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          #-------------#
+          ##Choco
+          #Upgrade Choco Packages
+          #choco upgrade all --prerelease --ignore-unfound --ignore-detected-reboot --yes
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          choco feature enable -n="allowGlobalConfirmation"
+          #-------------#
+          #Scoop
+          iex "& {$(irm get.scoop.sh)} -RunAsAdmin" ; refreshenv ; scoop --version
+          scoop bucket add extras "https://github.com/ScoopInstaller/Extras.git"
+          scoop bucket add java "https://github.com/ScoopInstaller/Java.git"
+          scoop bucket add php "https://github.com/ScoopInstaller/PHP.git"
+          scoop bucket add versions "https://github.com/ScoopInstaller/Versions.git"
+          scoop bucket known
+          #Winget (Via Scoop)
+          scoop install "main/winget" --global --no-cache ; refreshenv ; winget --version
+          #vcpkg
+          vcpkg integrate install ; refreshenv
+        continue-on-error: true
+
+      - name: Install Addons (Pre)
+        run: |
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          #7z
+          choco install "7zip.install" --prerelease --force --yes          
+          #alsa 
+          vcpkg install "alsa:x64-windows-static" --clean-after-build
+          #bzip2 
+          vcpkg install "bzip2:x64-windows-static" --clean-after-build
+          #cmake
+          #choco install "cmake" --prerelease --force --yes
+          choco uninstall "cmake" --force --yes 2>$null
+          choco uninstall "cmake.install" --force --yes 2>$null
+          choco install "cmake.install" --prerelease --force --yes --installargs '"ADD_CMAKE_TO_PATH=System"'          
+          #curl
+          choco install "curl" --prerelease --force --yes
+          vcpk install "curl:x64-windows-static" --clean-after-build
+          #delta
+          choco install "delta" --prerelease --force --yes
+          #eget
+          Invoke-WebRequest -Uri "https://bin.ajam.dev/x64_Windows/eget.exe" -OutFile "$env:SYSTEMROOT\eget.exe"
+          #libcap
+          vcpkg install "libcap:x64-windows-static" --clean-after-build
+          #libpcap 
+          vcpkg install "libpcap:x64-windows-static" --clean-after-build
+          #libsmb 
+          vcpkg install "libsmb2:x64-windows-static" --clean-after-build
+          #ncurses 
+          vcpkg install "ncurses:x64-windows-static" --clean-after-build
+          #ocilib
+          vcpkg install "ocilib:x64-windows-static" --clean-after-build
+          $env:OCI_DIR = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static" ; echo "OCI_DIR=$env:OCI_DIR" >> "$GITHUB_ENV"
+          $env:OCI_LIB_DIR = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\lib" ; echo "OCI_LIB_DIR=$env:OCI_LIB_DIR" >> "$GITHUB_ENV"
+          $env:OCI_INCLUDE_DIR = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" ; echo "OCI_INCLUDE_DIR=$env:OCI_INCLUDE_DIR" >> "$GITHUB_ENV"
+          #protobuf
+          vcpk install "protobuf:x64-windows-static" --clean-after-build
+          #rclone
+          choco install "rclone" --prerelease --force --yes
+        continue-on-error: true
+
+      - name: Install Addons (Tools)
+        run: |
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          #-------------#
+          #b3sum
+          eget "https://bin.ajam.dev/x64_Windows/b3sum.exe" --to "$env:SYSTEMROOT/b3sum.exe"
+          #Coreutils
+          eget "https://bin.ajam.dev/x64_Windows/coreutils.exe" --to "$env:SYSTEMROOT/coreutils.exe"
+          eget "https://bin.ajam.dev/x64_Windows/basename.exe" --to "$env:SYSTEMROOT/basename.exe"
+          eget "https://bin.ajam.dev/x64_Windows/cat.exe" --to "$env:SYSTEMROOT/cat.exe"
+          eget "https://bin.ajam.dev/x64_Windows/cut.exe" --to "$env:SYSTEMROOT/cut.exe"
+          eget "https://bin.ajam.dev/x64_Windows/dd.exe" --to "$env:SYSTEMROOT/dd.exe"
+          eget "https://bin.ajam.dev/x64_Windows/df.exe" --to "$env:SYSTEMROOT/df.exe"
+          eget "https://bin.ajam.dev/x64_Windows/dir.exe" --to "$env:SYSTEMROOT/dir.exe"
+          eget "https://bin.ajam.dev/x64_Windows/dirname.exe" --to "$env:SYSTEMROOT/dirname.exe"
+          eget "https://bin.ajam.dev/x64_Windows/du.exe" --to "$env:SYSTEMROOT/du.exe"
+          eget "https://bin.ajam.dev/x64_Windows/echo.exe" --to "$env:SYSTEMROOT/echo.exe"
+          eget "https://bin.ajam.dev/x64_Windows/env.exe" --to "$env:SYSTEMROOT/env.exe"
+          eget "https://bin.ajam.dev/x64_Windows/find.exe" --to "$env:SYSTEMROOT/find.exe"
+          eget "https://bin.ajam.dev/x64_Windows/head.exe" --to "$env:SYSTEMROOT/head.exe"
+          eget "https://bin.ajam.dev/x64_Windows/hostname.exe" --to "$env:SYSTEMROOT/hostname.exe"
+          eget "https://bin.ajam.dev/x64_Windows/link.exe" --to "$env:SYSTEMROOT/link.exe"
+          eget "https://bin.ajam.dev/x64_Windows/ln.exe" --to "$env:SYSTEMROOT/ln.exe"
+          eget "https://bin.ajam.dev/x64_Windows/ls.exe" --to "$env:SYSTEMROOT/ls.exe"
+          eget "https://bin.ajam.dev/x64_Windows/mkdir.exe" --to "$env:SYSTEMROOT/mkdir.exe"
+          eget "https://bin.ajam.dev/x64_Windows/mktemp.exe" --to "$env:SYSTEMROOT/mktemp.exe"
+          eget "https://bin.ajam.dev/x64_Windows/more.exe" --to "$env:SYSTEMROOT/more.exe"
+          eget "https://bin.ajam.dev/x64_Windows/mv.exe" --to "$env:SYSTEMROOT/mv.exe"
+          eget "https://bin.ajam.dev/x64_Windows/nproc.exe" --to "$env:SYSTEMROOT/nproc.exe"
+          eget "https://bin.ajam.dev/x64_Windows/numfmt.exe" --to "$env:SYSTEMROOT/numfmt.exe"
+          eget "https://bin.ajam.dev/x64_Windows/paste.exe" --to "$env:SYSTEMROOT/paste.exe"
+          eget "https://bin.ajam.dev/x64_Windows/printenv.exe" --to "$env:SYSTEMROOT/printenv.exe"
+          eget "https://bin.ajam.dev/x64_Windows/printf.exe" --to "$env:SYSTEMROOT/printf.exe"
+          eget "https://bin.ajam.dev/x64_Windows/pwd.exe" --to "$env:SYSTEMROOT/pwd.exe"
+          eget "https://bin.ajam.dev/x64_Windows/readlink.exe" --to "$env:SYSTEMROOT/readlink.exe"
+          eget "https://bin.ajam.dev/x64_Windows/realpath.exe" --to "$env:SYSTEMROOT/realpath.exe"
+          eget "https://bin.ajam.dev/x64_Windows/rm.exe" --to "$env:SYSTEMROOT/rm.exe"
+          eget "https://bin.ajam.dev/x64_Windows/rmdir.exe" --to "$env:SYSTEMROOT/rmdir.exe"
+          eget "https://bin.ajam.dev/x64_Windows/shuf.exe" --to "$env:SYSTEMROOT/shuf.exe"
+          eget "https://bin.ajam.dev/x64_Windows/sleep.exe" --to "$env:SYSTEMROOT/sleep.exe"
+          eget "https://bin.ajam.dev/x64_Windows/sort.exe" --to "$env:SYSTEMROOT/sort.exe"
+          eget "https://bin.ajam.dev/x64_Windows/tail.exe" --to "$env:SYSTEMROOT/tail.exe"
+          eget "https://bin.ajam.dev/x64_Windows/tee.exe" --to "$env:SYSTEMROOT/tee.exe"
+          eget "https://bin.ajam.dev/x64_Windows/touch.exe" --to "$env:SYSTEMROOT/touch.exe"
+          eget "https://bin.ajam.dev/x64_Windows/true.exe" --to "$env:SYSTEMROOT/true.exe"
+          eget "https://bin.ajam.dev/x64_Windows/uname.exe" --to "$env:SYSTEMROOT/uname.exe"
+          eget "https://bin.ajam.dev/x64_Windows/uniq.exe" --to "$env:SYSTEMROOT/uniq.exe"
+          eget "https://bin.ajam.dev/x64_Windows/unlink.exe" --to "$env:SYSTEMROOT/unlink.exe"
+          eget "https://bin.ajam.dev/x64_Windows/wc.exe" --to "$env:SYSTEMROOT/wc.exe"
+          eget "https://bin.ajam.dev/x64_Windows/whoami.exe" --to "$env:SYSTEMROOT/whoami.exe"
+          eget "https://bin.ajam.dev/x64_Windows/xargs.exe" --to "$env:SYSTEMROOT/xargs.exe"
+          #croc
+          eget "https://bin.ajam.dev/x64_Windows/croc.exe" --to "$env:SYSTEMROOT/croc.exe"
+          #dust
+          eget "https://bin.ajam.dev/x64_Windows/dust.exe" --to "$env:SYSTEMROOT/dust.exe"
+          #gdu
+          eget "https://bin.ajam.dev/x64_Windows/gdu.exe" --to "$env:SYSTEMROOT/gdu.exe"
+          #upx
+          eget "https://bin.ajam.dev/x64_Windows/upx.exe" --to "$env:SYSTEMROOT/upx.exe"
+          #wldd
+          eget "https://bin.ajam.dev/x64_Windows/wldd.exe" --to "$env:SYSTEMROOT/wldd.exe"
+          #yq
+          eget "https://bin.ajam.dev/x64_Windows/yq.exe" --to "$env:SYSTEMROOT/yq.exe"
+        continue-on-error: true
+
+      - name: Install Golang
+        run: |
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          #-------------#
+          (env | Select-String -Pattern "GOROOT_" | ForEach-Object { ($_ -split "=")[1] }).Trim() | ForEach-Object { Remove-Item -Path $_ -Recurse -Force -ErrorAction SilentlyContinue }
+          Remove-Item "Env:\GOPATH","Env:\GOROOT","Env:\GOTOOLDIR" -ErrorAction SilentlyContinue
+          choco install "golang" --prerelease --force --yes ; refreshenv
+          if (-not (Get-Command -Name go -ErrorAction SilentlyContinue)) {
+                Write-Host "`n[-] FATAL : Golang NOT Installed`n"
+                $env:CONTINUE = "NO" ; exit 1
+             } else {
+                $env:CONTINUE = "YES" ; go version
+             }
+        continue-on-error: true
+
+      - name: Install OpenSSL
+        run: |
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          #-------------#   
+          #nasm
+          choco install "nasm" --prerelease --force --yes
+          $EGET_LINK = (Invoke-WebRequest -Uri "https://www.nasm.us/pub/nasm/snapshots/latest/win64/" -UserAgent ((Invoke-WebRequest -Uri "https://pub.ajam.dev/repos/Azathothas/Wordlists/Misc/User-Agents/ua_chrome_macos_latest.txt").Content.Trim())).Content -split "`r`n" | Select-String -Pattern '(?<=<a href=")(.*?win64.zip)' -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Value } | Sort-Object {$_ -as [version]} | Select-Object -First 1 ; $env:EGET_LINK = "$EGET_LINK"
+          eget "https://www.nasm.us/pub/nasm/snapshots/latest/win64/$env:EGET_LINK" --file "nasm.exe" --to "$env:SYSTEMROOT/nasm.exe"
+          eget "https://www.nasm.us/pub/nasm/snapshots/latest/win64/$env:EGET_LINK" --file "ndisasm.exe" --to "$env:SYSTEMROOT/ndisasm.exe"
+          #Openssl [Not compatible with: boringssl |libressl]
+          #choco install "openssl" --prerelease --force --yes
+          scoop install "main/openssl" --global --no-cache ; refreshenv ; openssl version
+          #vcpkg install "openssl" --clean-after-build
+          vcpkg install "openssl:x64-windows-static" --clean-after-build
+          #vcpkg integrate install
+          #https://docs.rs/vcpkg/latest/vcpkg/#environment-variables
+          Remove-Item "Env:\VCPKGRS_DYNAMIC" -ErrorAction SilentlyContinue
+          ##Build :: https://wiki.openssl.org/index.php/Binaries
+           #eget https://download.firedaemon.com/FireDaemon-OpenSSL/FireDaemon-OpenSSL-x64-3.2.1.exe --download-only --to ".\openssl_firedaemon_installer.exe"
+           #& ".\openssl_firedaemon_installer.exe" /exenoui /qn /norestart REBOOT="ReallySuppress" APPDIR="C:\Program Files\OpenSSL" ADJUSTSYSTEMPATHENV="yes"
+          ##ENV
+           $env:OPENSSL_STATIC = "Yes" ; echo "OPENSSL_STATIC=$env:OPENSSL_STATIC" >> "$GITHUB_ENV"
+           #$env:OPENSSL_DIR = "$env:USERPROFILE\vcpkg\installed\x64-windows-static"
+           $env:OPENSSL_DIR = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static" ; echo "OPENSSL_DIR=$env:OPENSSL_DIR" >> "$GITHUB_ENV"
+           #$env:OPENSSL_LIB_DIR = "$env:USERPROFILE\vcpkg\installed\x64-windows-static\lib"
+           $env:OPENSSL_LIB_DIR = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\lib" ; echo "OPENSSL_LIB_DIR=$env:OPENSSL_LIB_DIR" >> "$GITHUB_ENV"
+           #$env:OPENSSL_INCLUDE_DIR = "$env:USERPROFILE\vcpkg\installed\x64-windows-static\include"
+           $env:OPENSSL_INCLUDE_DIR = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\include" ; echo "OPENSSL_INCLUDE_DIR=$env:OPENSSL_INCLUDE_DIR" >> "$GITHUB_ENV"
+        continue-on-error: true
+
+      - name: Install Rust
+        run: |
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          #-------------#                     
+          ##rust
+          if (-not (Get-Command -Name rustup -ErrorAction SilentlyContinue)) {
+                 Write-Host "`n[-] FATAL : Rust (Cargo) NOT Installed`n"
+                 $env:CONTINUE = "NO" ; exit 1
+              } else {
+                 $env:CONTINUE = "YES" ; rustup update --force
+              }
+        continue-on-error: true
+
+      - name: Install Zig
+        run: |
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          #-------------#   
+          scoop install "versions/zig-dev" --global --no-cache ; refreshenv ; zig version
+        continue-on-error: true
+
+      - name: Configure (pkg-config)
+        run: |
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          #-------------#  
+          scoop install "main/pkg-config" --global --no-cache ; refreshenv
+          $env:PKG_CONFIG_ALLOW_SYSTEM_LIBS = "1" ; echo "PKG_CONFIG_ALLOW_SYSTEM_LIBS=$env:PKG_CONFIG_ALLOW_SYSTEM_LIBS" >> "$GITHUB_ENV"
+          $env:PKG_CONFIG_ALLOW_SYSTEM_CFLAGS = "1" ; echo "PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=$env:PKG_CONFIG_ALLOW_SYSTEM_CFLAGS" >> "$GITHUB_ENV"
+          $env:PKG_CONFIG_PATH = "C:\vcpkg\installed\x64-windows-static\lib\pkgconfig;C:\vcpkg\installed\x64-windows\lib\pkgconfig;C:\Strawberry\c\lib\pkgconfig"
+          echo "PKG_CONFIG_PATH=$env:PKG_CONFIG_PATH" >> "$GITHUB_ENV"
+          pkg-config --list-all ; perl "C:\Strawberry\perl\bin\pkg-config" --list-all
+        continue-on-error: true
+
      #Replace with any extra things you want to do
       - name: Run Custom Cmd
         run: |
-           Write-Host "Hellow"
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          #-------------#          
+          Write-Host "Hellow"
+        continue-on-error: true
+
+    #https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse?tabs=powershell
+    #You must have provided a direct URL containing your SSH Public keys, else this won't work
+    # Smth to try: https://github.com/euske/pyrexecd
+    #            : https://github.com/ferama/rospo
+      - name: Configure SSH 
+        run: |
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv
+          #-------------#          
+          # TailScale SSH is not supported on windows: https://github.com/tailscale/tailscale/issues/4697
+          # Instead rely on a manual approach
+           Add-WindowsCapability -Online -Name OpenSSH.Server*
+           scoop install "main/openssh" --global --no-cache ; refreshenv
+          #Start Service
+           . "$env:ProgramData\scoop\apps\openssh\current\install-sshd.ps1" ; refreshenv
+           #. "C:\Program Files\OpenSSH-Win64\install-sshd.ps1"
+           #. "C:\Program Files\OpenSSH-Win64\ssh-keygen.exe" -A
+           #Start-Process -Wait -FilePath "C:\Program Files\OpenSSH-Win64\sshd.exe" -WindowStyle Hidden
+           #Start-Sleep 5
+          #Fix Perms 
+           #https://github.com/PowerShell/Win32-OpenSSH/wiki/OpenSSH-utility-scripts-to-fix-file-permissions
+           #. "C:\Program Files\OpenSSH-Win64\FixHostFilePermissions.ps1" -Confirm:$false | Out-Null
+           #. "C:\Program Files\OpenSSH-Win64\FixUserFilePermissions.ps1" -Confirm:$false | Out-Null
+          #Add Public SSH Key
+           New-Item -Path "$env:USERPROFILE\.ssh" -ItemType Directory -Force
+           #Add-Content -Path "$env:USERPROFILE\.ssh\authorized_keys" -Value "$((Invoke-RestMethod -Uri "${{ env.SSH_PUBLIC_KEY_URL }}").Split("`n")[1])"
+           (Invoke-RestMethod -Uri "${{ env.SSH_PUBLIC_KEY_URL }}").Split("`n") | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace($_)) { Add-Content -Path "$env:USERPROFILE\.ssh\authorized_keys" -Value $_ } }
+          #Configure SSH Config
+           $filePath = Join-Path $env:ProgramData "ssh\sshd_config"; if (-not (Test-Path $filePath)) { New-Item -Path (Split-Path $filePath) -Name "sshd_config" -ItemType File }; Add-Content -Path $filePath -Value "PasswordAuthentication yes`nAllowTcpForwarding yes`nPubkeyAuthentication yes"
+          #Configure Firewall
+           New-NetFirewallRule -Protocol TCP -LocalPort 22 -Direction Inbound -Action Allow -DisplayName "OpenSSH-Server-In-TCP"
+           New-NetFirewallRule -Protocol TCP -LocalPort 22 -Direction Outbound -Action Allow -DisplayName "OpenSSH-Server-Out-TCP"
+           New-NetFirewallRule -Protocol TCP -LocalPort 22 -Direction Inbound -Action Allow -DisplayName "OpenSSH-Server-In-TCP-EdgeTraversal" -EdgeTraversalPolicy Allow
+           if (!(Get-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -ErrorAction SilentlyContinue | Select-Object Name, Enabled)) {Write-Output "Firewall Rule 'OpenSSH-Server-In-TCP' does not exist, creating it..." New-NetFirewallRule -Name 'OpenSSH-Server-In-TCP' -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22} else {Write-Output "Firewall rule 'OpenSSH-Server-In-TCP' has been created and exists."} 
+           netsh firewall show state
+           ipconfig
+           arp -A
         continue-on-error: true
 
      #This keeps GH Actions hypnotized until timeout      
       - name: SSH (Breakpoint) || Sleep ∞
-        run: |        
+        run: | 
+          #presets
+          $ErrorActionPreference = "SilentlyContinue" ; $env:ErrorActionPreference = "SilentlyContinue"
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" ; refreshenv               
           #Finally ReStart 
           Stop-Process -Name sshd -Force 2>$null -ErrorAction SilentlyContinue
-          Start-Process -Wait -FilePath "C:\Program Files\OpenSSH-Win64\sshd.exe" -WindowStyle Hidden ; Start-Sleep 5
+          Restart-Service -Name sshd -Force
+          Restart-Service -Name ssh-agent -Force
+          #Start-Process -Wait -FilePath "C:\Program Files\OpenSSH-Win64\sshd.exe" -WindowStyle Hidden ; Start-Sleep 5
           #Check 
           Get-Process -Name sshd   
           #Sleep
-          while ($true) {Start-Sleep -Seconds 1} 
-        continue-on-error: true 
+          while ($true) {Start-Sleep -Seconds 1}
+          Start-Sleep -Seconds 22200
+        continue-on-error: true
