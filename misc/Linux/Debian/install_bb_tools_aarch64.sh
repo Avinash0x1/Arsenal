@@ -76,6 +76,8 @@ export INSTALL_DIR="/usr/local/bin"
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/fget" -o "$INSTALL_DIR/fget" && sudo chmod +xwr "$INSTALL_DIR/fget" &
 #findomain
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/findomain" -o "$INSTALL_DIR/findomain" && sudo chmod +xwr "$INSTALL_DIR/findomain" & 
+#freeze
+ sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/freeze" -o "$INSTALL_DIR/freeze" && sudo chmod +xwr "$INSTALL_DIR/freeze" & 
 #gau : https://github.com/lc/gau
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/gau" -o "$INSTALL_DIR/gau" && sudo chmod +xwr "$INSTALL_DIR/gau" &
 #getJS
@@ -94,6 +96,8 @@ export INSTALL_DIR="/usr/local/bin"
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/gitleaks" -o "$INSTALL_DIR/gitleaks" && sudo chmod +xwr "$INSTALL_DIR/gitleaks" &
 #github-subdomains : https://github.com/gwen001/github-subdomains
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/github-subdomains" -o "$INSTALL_DIR/github-subdomains" && sudo chmod +xwr "$INSTALL_DIR/github-subdomains" &
+#glow
+ sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/glow" -o "$INSTALL_DIR/glow" && sudo chmod +xwr "$INSTALL_DIR/glow" & 
 #gotator : https://github.com/Josue87/gotator
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/gotator" -o "$INSTALL_DIR/gotator" && sudo chmod +xwr "$INSTALL_DIR/gotator" &
 #gowitness
@@ -118,6 +122,8 @@ export INSTALL_DIR="/usr/local/bin"
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/mantra" -o "$INSTALL_DIR/mantra" && sudo chmod +xwr "$INSTALL_DIR/mantra" &
 #mapcidr : https://github.com/projectdiscovery/mapcidr
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/mapcidr" -o "$INSTALL_DIR/mapcidr" && sudo chmod +xwr "$INSTALL_DIR/mapcidr" &
+#massdns
+ sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/massdns" -o "$INSTALL_DIR/massdns" && sudo chmod +xwr "$INSTALL_DIR/massdns" & 
 #micro
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/micro" -o "$INSTALL_DIR/micro" && sudo chmod +xwr "$INSTALL_DIR/micro" &
 #mksub
@@ -147,7 +153,7 @@ export INSTALL_DIR="/usr/local/bin"
 #ripgrep : 
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/ripgrep" -o "$INSTALL_DIR/ripgrep" && sudo chmod +xwr "$INSTALL_DIR/ripgrep" &
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/ripgrep" -o "$INSTALL_DIR/rg" && sudo chmod +xwr "$INSTALL_DIR/rg" &
- sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/rga" -o "$INSTALL_DIR/rg" && sudo chmod +xwr "$INSTALL_DIR/rga" & 
+ sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/rga" -o "$INSTALL_DIR/rga" && sudo chmod +xwr "$INSTALL_DIR/rga" & 
 #roboxtractor : https://github.com/Josue87/roboxtractor
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/roboxtractor" -o "$INSTALL_DIR/roboxtractor" && sudo chmod +xwr "$INSTALL_DIR/roboxtractor" &
 #s3scanner : https://github.com/sa7mon/s3scanner
@@ -176,6 +182,8 @@ export INSTALL_DIR="/usr/local/bin"
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/subxtract" -o "$INSTALL_DIR/subxtract" && sudo chmod +xwr "$INSTALL_DIR/subxtract" &
 #tlsx : https://github.com/projectdiscovery/tlsx
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/tlsx" -o "$INSTALL_DIR/tlsx" && sudo chmod +xwr "$INSTALL_DIR/tlsx" &
+#tmux
+ sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/tmux" -o "$INSTALL_DIR/tmux" && sudo chmod +xwr "$INSTALL_DIR/tmux" &
 #tok
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/tok" -o "$INSTALL_DIR/tok" && sudo chmod +xwr "$INSTALL_DIR/tok" &
 #trufflehog : https://github.com/trufflesecurity/trufflehog
@@ -196,5 +204,5 @@ export INSTALL_DIR="/usr/local/bin"
  sudo curl -qfsSL "https://bin.ajam.dev/aarch64_arm64_Linux/yj" -o "$INSTALL_DIR/yj" && sudo chmod +xwr "$INSTALL_DIR/yj" &
 #-------------------------------------------------------------------------------#
 set +x ; echo
-wait ; echo
+wait ; reset ; echo
 ###END###
