@@ -1,27 +1,115 @@
+- #### Index
+> - [**Setup**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#setup)
+> > - [**`PASSWORDLESS`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#passwordless)
+> > - [**`Upgrade`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#upgrade)
+> > - [**`TIMEZONE`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#timezone)
+> > - [**`IP Forwarding`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#ip-forwarding)
+> > - [**`Firewall`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#ufw-firewall)
+> > - [**`SystemD`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#systemd)
+> - [**Addons & Tools**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#install-addons--utils)
+> > - [**`Tools (Minimal)`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#minimal-recommended)
+> > - [**`Tools (Large)`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#static-bins-optional)
+> > - [**`Crystal Lang`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#install-crystal-optional)
+> > - [**`Golang`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#install-golang-optional)
+> > - [**`Nix`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#install-nix-optional)
+> > - [**`Python (MiniConda)`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#python-miniconda-essential)
+> > - [**`Rust`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#install-rust-optional)
+> > - [**`Ziglang`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#install-ziglang-optional)         
+> - [**`Customize/ DotFiles`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#customize-optional)
+> - [**`Desktop Environment`**](https://github.com/Azathothas/Arsenal/tree/main/misc/WSL/Debian#dexrdp)
+---
 - #### Setup
-> - **Passwordless**
+> - ##### **Passwordless**
  ```bash
  echo -e "$USER ALL=(ALL) NOPASSWD:ALL" | sudo tee -a "/etc/sudoers"
- sudo apt-get update -y
+ sudo apt-get update -y -qq
  ```
-> - **CoreUtils**
+
+> - ##### **Upgrade**
+```bash
+!#Upgrade PKGs & Deps
+ sudo apt-get update -y -qq ; sudo apt-get dist-upgrade -y -qq ; sudo apt-get upgrade -y -qq
+ sudo apt install \
+ apt-transport-https apt-utils bash bash-completion build-essential ca-certificates coreutils curl fakeroot file fuse git gnupg2 gpg-agent htop jq kmod less lsof moreutils nano ntp pciutils procps psmisc rsync software-properties-common sudo supervisor tar tmux util-linux xterm wget zip -y -qq
+ sudo apt full-upgrade -y -qq
+
+!#Cleanup
+ sudo apt autoremove -y -qq
+ sudo apt autoclean -y -qq
+
+!#Upgrade Distro
+ sudo nano "/etc/apt/sources.list"
+ #https://www.debian.org/releases/
+ `
+ #Change bookworm to whatever is he newest version, and also replace http with https (ca-certificates)
+ deb https://deb.debian.org/debian bookworm main
+ deb https://deb.debian.org/debian bookworm-updates main
+ deb https://security.debian.org/debian-security bookworm-security main
+ deb https://ftp.debian.org/debian bookworm-backports main
+ `
+
+!#Upgrade PKGs & Deps (again)
+ sudo umount -l "/lib/modules/"
+ sudo apt-get update -y -qq ; sudo apt-get dist-upgrade -y -qq ; sudo apt-get upgrade -y -qq
+ sudo apt full-upgrade -y -qq ; sudo apt autoremove -y -qq ; sudo apt autoclean -y -qq
+
+!#Check
+ sudo reboot # or wsl --terminate "Debian"
+#After Reboot
+ sudo mount -l "/lib/modules/"
+ lsb_release -a || cat "/etc/os-release"
+
+!#If Stable packages are too old
+#Switch to Testing (Good Enough) or Unstable (Dangerous)
+ sudo nano "/etc/apt/sources.list"
+ #https://www.debian.org/releases/
+ `
+ #Change bookworm to testing
+ deb https://deb.debian.org/debian testing main
+ deb https://deb.debian.org/debian testing-updates main
+ deb https://security.debian.org/debian-security testing-security main
+ deb https://ftp.debian.org/debian testing-backports main
+ `
+ sudo umount -l "/lib/modules/"
+ sudo apt-get update -y -qq ; sudo apt-get dist-upgrade -y -qq ; sudo apt-get upgrade -y -qq
+ sudo apt full-upgrade -y -qq ; sudo apt autoremove -y -qq ; sudo apt autoclean -y -qq
+!#Check
+ sudo reboot # or wsl --terminate "Debian"
+#After Reboot
+ sudo mount -l "/lib/modules/"
+ lsb_release -a || cat "/etc/os-release"
+```
+
+> - ##### **TimeZone**
+```bash
+!# Replace Asia/Kathmandu with yours
+ sudo apt-get update -y && sudo DEBIAN_FRONTEND="noninteractive" apt-get install -y tzdata
+ sudo ln -fs "/usr/share/zoneinfo/Asia/Kathmandu" "/etc/localtime"
+ sudo dpkg-reconfigure --frontend noninteractive tzdata
+ sudo apt-get update -y
+```
+
+> - ##### **CoreUtils**
  ```bash
- sudo apt-get update -y ; sudo apt-get dist-upgrade -y ; sudo apt-get upgrade -y
  !# May need to run this Twice
- sudo apt install autoconf automake autopoint binutils bison build-essential ca-certificates coreutils curl dos2unix git gcc htop flex file jq moreutils wget -y
+ sudo apt install \
+ apt-transport-https apt-utils bash bash-completion build-essential ca-certificates coreutils curl dos2unix \
+ fakeroot file fuse git gnupg2 gpg-agent htop jq kmod less lsof moreutils nano ntp pciutils procps psmisc \
+ rsync software-properties-common sudo supervisor tar tmux util-linux xterm wget zip -y -qq
+
  !# Networking
  sudo apt-get install dnsutils 'inetutils*' net-tools netcat-traditional -y
  sudo apt-get install 'iputils*' -y
  !# Fix Perms for ping
  sudo setcap cap_net_raw+ep "$(which ping)"
  ```
-> - **IP Forwarding**
+> - ##### **IP Forwarding**
 ```bash
  echo 'net.ipv4.ip_forward = 1' | sudo tee -a "/etc/sysctl.conf"
  echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a "/etc/sysctl.conf"
  sudo sysctl -p "/etc/sysctl.conf"
 ```
-> - **ufw Firewall**
+> - ##### **ufw Firewall**
 ```bash
 !# Install ufw
 sudo apt-get -y install ufw
@@ -50,7 +138,7 @@ sudo ufw allow out 7332/udp
 sudo ufw reload
 sudo ufw status numbered
 ```
-> - **Systemd**
+> - ##### **Systemd**
  ```bash
  !# Enable SystemD : https://devblogs.microsoft.com/commandline/systemd-support-is-now-available-in-wsl/
  echo -e "[boot]\nsystemd=true" | sudo tee "/etc/wsl.conf"
@@ -69,7 +157,12 @@ sudo ufw status numbered
  ```
 ---
 - #### Install Addons & Utils
-- ##### [**Static-Bins**](https://github.com/Azathothas/Toolpacks) (Essential)
+- ##### Minimal (Recommended)
+```bash
+# bash <(curl -qfsSL "https://raw.githubusercontent.com/Azathothas/Arsenal/main/misc/Linux/install_bb_tools.sh")
+bash <(curl -qfsSL "https://pub.ajam.dev/repos/Azathothas/Arsenal/misc/Linux/install_bb_tools.sh")
+```
+- ##### [**Static-Bins**](https://github.com/Azathothas/Toolpacks) (Optional)
  ```bash
  !# SKIP THIS IF YOU INTEND TO ALSO RUN THE CUSTOMIZE SCRIPT (BELOW)
 !# eget & 7z (DEPS)
@@ -147,4 +240,24 @@ wget "https://raw.githubusercontent.com/Azathothas/Arsenal/main/misc/WSL/Debian/
  export GOPATH="$HOME/go"
  export PATH="$HOME/bin:$HOME/.cargo/bin:$HOME/.cargo/env:$GOROOT/bin:$GOPATH/bin:$HOME/miniconda3/bin:$HOME/miniconda3/condabin:/usr/local/zig:/usr/local/zig/lib:/usr/local/zig/lib/include:$PATH"
  ```
+---
+- #### `DE/XRDP`
+> - [Cinnamon](https://projects.linuxmint.com/cinnamon/) (Bloated)
+> - [GNOME](https://www.gnome.org/) (Bloated)
+> - [KDE Plasma](https://kde.org/plasma-desktop/) (Bloated)
+> - [LXDE](http://www.lxde.org/) (Minimal)
+> - [LXQT](https://lxqt-project.org/) (Minimal)
+> - [MATE](https://mate-desktop.org/) (Balanced)
+> - [XFCE](https://www.xfce.org/) (Minimal)
+```bash
+#This will take a long time and you may not see any output
+sudo apt-get install tasksel -y -qq
+sudo tasksel install xfce-desktop --new-install
+#Install & enable rdp
+sudo apt-get install xrdp -y
+sudo systemctl enable xrdp --now
+sudo systemctl restart xrdp
+sudo systemctl status xrdp
+#Use a RDP client to connect to $WSL_VM_IP:3389
+```
 ---
