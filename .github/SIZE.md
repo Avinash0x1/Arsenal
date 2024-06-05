@@ -13,9 +13,17 @@
 744K   │ └─┬ nmap
 732K   │   ├── Services.md
 8.0K   │   └── README.md
-560K   ├─┬ misc
-188K   │ ├─┬ Github
-184K   │ │ └─┬ Runners
+600K   ├─┬ misc
+192K   │ ├─┬ Github
+188K   │ │ └─┬ Runners
+ 72K   │ │   ├─┬ Self-Hosted
+ 16K   │ │   │ ├── x86_64-ubuntu.dockerfile
+ 16K   │ │   │ ├── aarch64-ubuntu.dockerfile
+ 12K   │ │   │ ├── ubuntu-systemd-base.dockerfile
+8.0K   │ │   │ ├── startup.sh
+8.0K   │ │   │ ├── run.sh
+4.0K   │ │   │ ├── cron_README.md
+4.0K   │ │   │ └── README.md
  68K   │ │   ├─┬ Ubuntu
  20K   │ │   │ ├── 0xf_gh_runner_ubuntu_debug.yaml
  16K   │ │   │ ├── 0xf_gh_runner_ubuntu_ng_no_ts_debug.yaml
@@ -23,14 +31,6 @@
 8.0K   │ │   │ ├── ngrok_tg_ssh.sh
 8.0K   │ │   │ ├── debloat.sh
 4.0K   │ │   │ └── ipv6_warp.sh
- 68K   │ │   ├─┬ Self-Hosted
- 16K   │ │   │ ├── x86_64-ubuntu.dockerfile
- 16K   │ │   │ ├── aarch64-ubuntu.dockerfile
- 12K   │ │   │ ├── ubuntu-systemd-base.dockerfile
-8.0K   │ │   │ ├── run.sh
-4.0K   │ │   │ ├── startup.sh
-4.0K   │ │   │ ├── cron_README.md
-4.0K   │ │   │ └── README.md
  36K   │ │   ├─┬ Windows
  24K   │ │   │ ├── 0xf_gh_runner_windows_debug.yaml
 8.0K   │ │   │ └── debloat.ps1
@@ -54,9 +54,9 @@
 4.0K   │ │ ├── TIPS_TRICKS.md
 4.0K   │ │ ├── DAGU_CRON_EXAMPLE.yaml
 4.0K   │ │ └── DAGU_CRON.md
- 40K   │ ├─┬ WSL
- 28K   │ │ ├─┬ Debian
- 12K   │ │ │ ├── README.md
+ 44K   │ ├─┬ WSL
+ 32K   │ │ ├─┬ Debian
+ 16K   │ │ │ ├── README.md
 8.0K   │ │ │ ├── customize.sh
 4.0K   │ │ │ └── starship.toml
 8.0K   │ │ └── README.md
@@ -86,6 +86,11 @@
 4.0K   │ │   ├── devsetup.sh
 4.0K   │ │   ├── debloat.sh
 4.0K   │ │   └── change_hostname.sh
+ 16K   │ ├─┬ Contabo
+ 12K   │ │ └── reboot_instance.sh
+ 16K   │ ├─┬ Amazon
+ 12K   │ │ └─┬ AWS
+8.0K   │ │   └── reboot_instance.sh
  12K   │ ├─┬ Segfault
 8.0K   │ │ └── debloat.sh
 8.0K   │ └─┬ uBlock
