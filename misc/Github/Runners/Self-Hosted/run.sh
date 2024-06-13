@@ -4,9 +4,9 @@
 
 #------------------------------------------------------------------------------------#
 #Requires passwordless sudo 
-if sudo -n true 2>/dev/null; then
+if sudo -n -l | grep -q NOPASSWD; then
    echo -e "\n[+] Passwordless sudo is Configured"
-   sudo grep -E '^\s*[^#]*\s+ALL\s*=\s*\(\s*ALL\s*\)\s+NOPASSWD:' "/etc/sudoers" 2>/dev/null
+   sudo -n -l 2>/dev/null
 else
    echo -e "\n[-] Passwordless sudo is NOT Configured"
    echo -e "\n[-] READ: https://web.archive.org/web/20230614212916/https://linuxhint.com/setup-sudo-no-password-linux/\n"
@@ -16,102 +16,115 @@ fi
 #------------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------------#
+#Sanity Check
+if ! command -v podman &> /dev/null; then
+   echo -e "\n[-] Podman is NOT Installed/Configured"
+   echo -e "[-] Install ALL Dependencies && Configure ENV VARS|PATH\n"
+   echo -e "\n[-] READ: https://github.com/Azathothas/Toolpacks/blob/main/.github/runners/README.md#additional-notes--refs\n"
+ exit 1
+fi
+if ! command -v docker &> /dev/null; then
+   echo -e "\n[-] Docker is NOT Installed/Configured"
+   echo -e "[-] Install ALL Dependencies && Configure ENV VARS|PATH\n"
+   echo -e "\n[-] READ: https://github.com/Azathothas/Toolpacks/blob/main/.github/runners/README.md#additional-notes--refs\n"
+ exit 1
+fi
+#------------------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------------#
 ##ENV
+ SYSTMP="$(dirname $(mktemp -u))" && export SYSTMP="$SYSTMP"
+ USER="$(whoami)" && export USER="$USER"
+ HOME="$(getent passwd $USER | cut -d: -f6)" && export HOME="$HOME" ; pushd "$HOME" >/dev/null 2>&1
+ echo -e "\n[+] USER = $USER"
+ echo -e "[+] HOME = $HOME"
+ echo -e "[+] WORKDIR = $(realpath .)"
+ echo -e "[+] PATH = $PATH\n"
 #Name+{rand}
-if [ -z "$DOCKER_CONTAINER_NAME" ]; then
+if [ -z "$PODMAN_CONTAINER_NAME" ]; then
  echo -e "\n[+] Setting Default Container Name: gh-runner-arm64x-gcp"
-  export DOCKER_CONTAINER_NAME="gh-runner-arm64x-gcp"
-  sudo docker stop "${DOCKER_CONTAINER_NAME}" >/dev/null 2>&1
+  export PODMAN_CONTAINER_NAME="gh-runner-arm64x-gcp"
+  sudo podman stop "${PODMAN_CONTAINER_NAME}" >/dev/null 2>&1
 else
- export DOCKER_CONTAINER_NAME="${DOCKER_CONTAINER_NAME}"
-  echo -e "\n[+] Setting Default Container Name: ${DOCKER_CONTAINER_NAME}"
-  sudo docker stop "${DOCKER_CONTAINER_NAME}" >/dev/null 2>&1
+ export PODMAN_CONTAINER_NAME="${PODMAN_CONTAINER_NAME}"
+  echo -e "\n[+] Setting Default Container Name: ${PODMAN_CONTAINER_NAME}"
+  sudo podman stop "${PODMAN_CONTAINER_NAME}" >/dev/null 2>&1
 fi
 #Image
-if [ -z "$DOCKER_CONTAINER_IMAGE" ]; then
+if [ -z "$PODMAN_CONTAINER_IMAGE" ]; then
  echo -e "\n[+] Setting Default Container Image: azathothas/gh-runner-aarch64-ubuntu"
-  export DOCKER_CONTAINER_IMAGE="azathothas/gh-runner-aarch64-ubuntu"
-  sudo docker rmi "${DOCKER_CONTAINER_IMAGE}" --force >/dev/null 2>&1
-  sudo docker pull "${DOCKER_CONTAINER_IMAGE}" 2>/dev/null
+  export PODMAN_CONTAINER_IMAGE="azathothas/gh-runner-aarch64-ubuntu"
+  sudo podman rmi "${PODMAN_CONTAINER_IMAGE}" --force >/dev/null 2>&1
+  sudo podman pull "${PODMAN_CONTAINER_IMAGE}"
 else
- export DOCKER_CONTAINER_IMAGE="${DOCKER_CONTAINER_IMAGE}"
- echo -e "\n[+] Setting Default Container Image: ${DOCKER_CONTAINER_IMAGE}"
- sudo docker rmi "${DOCKER_CONTAINER_IMAGE}" --force >/dev/null 2>&1
- sudo docker pull "${DOCKER_CONTAINER_IMAGE}" 2>/dev/null
+ export PODMAN_CONTAINER_IMAGE="${PODMAN_CONTAINER_IMAGE}"
+ echo -e "\n[+] Setting Default Container Image: ${PODMAN_CONTAINER_IMAGE}"
+ sudo podman rmi "${PODMAN_CONTAINER_IMAGE}" --force >/dev/null 2>&1
+ sudo podman pull "${PODMAN_CONTAINER_IMAGE}"
 fi
 #Env File
-if [ -z "$DOCKER_ENV_FILE" ]; then
+if [ -z "$PODMAN_ENV_FILE" ]; then
  echo -e "\n[+] Setting Default Container Env File: $HOME/.config/gh-runner/.env"
-  export DOCKER_ENV_FILE="$HOME/.config/gh-runner/.env"
-     if ! [[ -s "${DOCKER_ENV_FILE}" ]]; then
-         echo -e "\n[-] Fatal: Empty/Non Existent ${DOCKER_ENV_FILE} file!"
+  export PODMAN_ENV_FILE="$HOME/.config/gh-runner/.env"
+     if ! [[ -s "${PODMAN_ENV_FILE}" ]]; then
+         echo -e "\n[-] Fatal: Empty/Non Existent ${PODMAN_ENV_FILE} file!"
        exit 1
      fi    
 else
- export DOCKER_ENV_FILE="${DOCKER_ENV_FILE}"
- echo -e "\n[+] Setting Default Container Env File: ${DOCKER_ENV_FILE}"
-      if ! [[ -s "${DOCKER_ENV_FILE}" ]]; then
-         echo -e "\n[-] Fatal: Empty/Non Existent ${DOCKER_ENV_FILE} file!"
+ export PODMAN_ENV_FILE="${PODMAN_ENV_FILE}"
+ echo -e "\n[+] Setting Default Container Env File: ${PODMAN_ENV_FILE}"
+      if ! [[ -s "${PODMAN_ENV_FILE}" ]]; then
+         echo -e "\n[-] Fatal: Empty/Non Existent ${PODMAN_ENV_FILE} file!"
        exit 1
      fi 
 fi
 #Log File
-if [ -z "$DOCKER_LOG_FILE" ]; then
- DOCKER_LOG_FILE="$(mktemp)" && export DOCKER_LOG_FILE="${DOCKER_LOG_FILE}"
- echo -e "\n[+] Setting Default Container LOG File: ${DOCKER_LOG_FILE}"
- echo -e "[+] View Logs: tail -f ${DOCKER_LOG_FILE}\n"
+if [ -z "$PODMAN_LOG_FILE" ]; then
+ PODMAN_LOG_FILE="$(mktemp)" && export PODMAN_LOG_FILE="${PODMAN_LOG_FILE}"
+ echo -e "\n[+] Setting Default Container LOG File: ${PODMAN_LOG_FILE}"
+ echo -e "[+] View Logs: tail -f ${PODMAN_LOG_FILE}\n"
 else
- export DOCKER_LOG_FILE="${DOCKER_LOG_FILE}"
- echo -e "\n[+] Setting Default Container LOG File:${DOCKER_LOG_FILE}"
- echo -e "[+] View Logs: tail -f ${DOCKER_LOG_FILE}\n" 
+ export PODMAN_LOG_FILE="${PODMAN_LOG_FILE}"
+ echo -e "\n[+] Setting Default Container LOG File:${PODMAN_LOG_FILE}"
+ echo -e "[+] View Logs: tail -f ${PODMAN_LOG_FILE}\n" 
 fi
 #------------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------------#
 #Stop Existing
 echo -e "\n[+] Cleaning PreExisting Container\n"
-sudo docker stop "$(sudo docker ps -aqf name=${DOCKER_CONTAINER_NAME})" >/dev/null 2>&1 &
+sudo podman stop "$(sudo podman ps -aqf name=${PODMAN_CONTAINER_NAME})" >/dev/null 2>&1 &
 wait
-sudo docker stop "$(sudo docker ps -aqf name=${DOCKER_CONTAINER_NAME})" >/dev/null 2>&1 && sleep 5
+sudo podman stop "$(sudo podman ps -aqf name=${PODMAN_CONTAINER_NAME})" >/dev/null 2>&1 && sleep 5
 #RUN
-echo -e "\n[+] Starting Runner Container (LOGFILE: ${DOCKER_LOG_FILE})\n"
-if [ "$SYSBOX" == "NO" ]; then
-   echo -e "[+] NO SYSBOX [+]"
-   set -x && nohup sudo docker run --pull="always" --network="host" --name="${DOCKER_CONTAINER_NAME}" --rm --env-file="${DOCKER_ENV_FILE}" "${DOCKER_CONTAINER_IMAGE}" > "${DOCKER_LOG_FILE}" 2>&1 &
-else
-   set -x && nohup sudo docker run --pull="always" --runtime "sysbox-runc" --network="bridge" --name="${DOCKER_CONTAINER_NAME}" --rm --env-file="${DOCKER_ENV_FILE}" "${DOCKER_CONTAINER_IMAGE}" > "${DOCKER_LOG_FILE}" 2>&1 &
-fi
-set +x && echo -e "[+] Waiting 120s..." && sleep 120
+echo -e "\n[+] Starting Runner Container (LOGFILE: ${PODMAN_LOG_FILE})\n"
+set -x && nohup sudo podman run --privileged --network="bridge" --systemd="always" --tz="UTC" --pull="always" --name="${PODMAN_CONTAINER_NAME}" --rm --env-file="${PODMAN_ENV_FILE}" "${PODMAN_CONTAINER_IMAGE}" > "${PODMAN_LOG_FILE}" 2>&1 &
+set +x && echo -e "[+] Waiting 30s..." && sleep 30
 #Get logs
-DOCKER_ID="$(sudo docker ps -qf name=${DOCKER_CONTAINER_NAME})" && export DOCKER_ID="${DOCKER_ID}"
-DOCKER_LOGPATH="$(sudo docker inspect --format='{{.LogPath}}' ${DOCKER_CONTAINER_NAME})" && export DOCKER_LOGPATH="${DOCKER_LOGPATH}"
-echo -e "\n[+] Writing Logs to ${DOCKER_LOGPATH} (${DOCKER_CONTAINER_NAME} :: ${DOCKER_ID})\n"
-#sudo jq -r '.log' "${DOCKER_LOGPATH}""
+PODMAN_ID="$(sudo podman ps -qf name=${PODMAN_CONTAINER_NAME})" && export PODMAN_ID="${PODMAN_ID}"
+PODMAN_LOGPATH="$(sudo podman inspect --format='{{.HostConfig.LogConfig.Path}}' ${PODMAN_CONTAINER_NAME})" && export PODMAN_LOGPATH="${PODMAN_LOGPATH}"
+echo -e "\n[+] Writing Logs to ${PODMAN_LOGPATH} (${PODMAN_CONTAINER_NAME} :: ${PODMAN_ID})\n"
+sudo podman exec --user "runner" --env-file="${PODMAN_ENV_FILE}" "${PODMAN_ID}" "/usr/local/bin/manager.sh" >> "${PODMAN_LOG_FILE}" 2>&1 &
+set +x && echo -e "[+] Waiting 10s..." && sleep 10
+#sudo jq -r '.log' "${PODMAN_LOGPATH}""
 #Monitor & Stop on Exit
+set +x && echo -e "[+] Executing Runner..."
 while true; do
-  export SHUTDOWN=false
-  while IFS= read -r LOGS; do
-    if echo "$LOGS" | grep -q "s6-rc: info: service s6rc-oneshot-runner successfully stopped"; then
-      echo -e "\n[+] Stopping... (${DOCKER_CONTAINER_NAME} :: ${DOCKER_ID})\n"
-      sudo jq -r '.log' "${DOCKER_LOGPATH}" | grep -i -A 999999 "Exiting runner"
-      sudo docker stop "$(sudo docker ps -aqf name=${DOCKER_CONTAINER_NAME})"
-      export SHUTDOWN=true
-      break
+    if ! pgrep -f "/usr/local/bin/manager.sh" > /dev/null; then
+        cat "${PODMAN_LOG_FILE}"
+      sudo podman stop "${PODMAN_ID}" --ignore
+      exit 0
     fi
-  done < <(cat "${DOCKER_LOG_FILE}")
-  #Check Status
-  if [ "$SHUTDOWN" = true ]; then
-    break
-  fi
-  sleep 5
+    sleep 5
 done
 #------------------------------------------------------------------------------------#
 #END
-echo -e "\n\n[+] Completed Runner ${DOCKER_CONTAINER_NAME} (LOGFILE: ${DOCKER_LOG_FILE})\n\n"
-sed '/^$/d' "${DOCKER_LOG_FILE}"
+popd >/dev/null 2>&1
+echo -e "\n\n[+] Completed Runner ${PODMAN_CONTAINER_NAME} (LOGFILE: ${PODMAN_LOG_FILE})\n\n"
+sed '/^$/d' "${PODMAN_LOG_FILE}"
 echo -e "\n\n[+] Listing All Running Containers\n"
-sudo docker ps ; echo
-echo -e 'RUN (Remove ALL Containers): sudo docker ps -aq | xargs sudo docker stop 2>/dev/null && sudo docker rm "$(docker ps -aq)" --force' && echo
-echo -e 'RUN (Remove ALL Images): sudo docker rmi -f $(docker images -q) >/dev/null 2>&1' && echo
+sudo podman ps ; echo
+echo -e 'RUN (Remove ALL Containers): sudo podman ps -aq | xargs sudo podman stop 2>/dev/null && sudo podman rm "$(podman ps -aq)" --force' && echo
+echo -e 'RUN (Remove ALL Images): sudo podman rmi -f $(podman images -q) >/dev/null 2>&1' && echo
 #EOF
 #------------------------------------------------------------------------------------#
