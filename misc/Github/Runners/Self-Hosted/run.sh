@@ -4,20 +4,25 @@
 
 #------------------------------------------------------------------------------------#
 #Requires passwordless sudo 
-if sudo -n -l | grep -q NOPASSWD; then
-   echo -e "\n[+] Passwordless sudo is Configured"
-   sudo -n -l 2>/dev/null
+if [ "$(id -u)" -eq 0 ]; then
+    echo -e "\n[+] USER:$(whoami) Running as root, skipping passwordless Sudo Checks"
 else
-   echo -e "\n[-] Passwordless sudo is NOT Configured"
-   echo -e "\n[-] READ: https://web.archive.org/web/20230614212916/https://linuxhint.com/setup-sudo-no-password-linux/\n"
-   #exit
-   exit 1
+    if sudo -n -l | grep -q NOPASSWD; then
+       echo -e "\n[+] Passwordless sudo is Configured"
+       sudo -n -l 2>/dev/null
+    else
+       echo -e "\n[-] Passwordless sudo is NOT Configured"
+       echo -e "\n[-] READ: https://web.archive.org/web/20230614212916/https://linuxhint.com/setup-sudo-no-password-linux/\n"
+       #exit
+       exit 1
+    fi
 fi
 #------------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------------#
 #Sanity Check
 if ! command -v podman &> /dev/null; then
+   #If this doesn't work with sudo: sudo ln -s "$(which podman)" "/usr/local/bin/podman"
    echo -e "\n[-] Podman is NOT Installed/Configured"
    echo -e "[-] Install ALL Dependencies && Configure ENV VARS|PATH\n"
    echo -e "\n[-] READ: https://github.com/Azathothas/Toolpacks/blob/main/.github/runners/README.md#additional-notes--refs\n"
@@ -99,7 +104,7 @@ sudo podman stop "$(sudo podman ps -aqf name=${PODMAN_CONTAINER_NAME})" >/dev/nu
 #RUN
 echo -e "\n[+] Starting Runner Container (LOGFILE: ${PODMAN_LOG_FILE})\n"
 sudo mkdir -p "/var/lib/containers/tmp"
-set -x && nohup sudo podman run --privileged --network="bridge" --systemd="always" --volume="/var/lib/containers/tmp:/tmp" --tz="UTC" --pull="always" --name="${PODMAN_CONTAINER_NAME}" --rm --env-file="${PODMAN_ENV_FILE}" "${PODMAN_CONTAINER_IMAGE}" > "${PODMAN_LOG_FILE}" 2>&1 &
+set -x && nohup sudo podman run --privileged --network="bridge" --systemd="always" --ulimit="host" --volume="/var/lib/containers/tmp:/tmp" --tz="UTC" --pull="always" --name="${PODMAN_CONTAINER_NAME}" --rm --env-file="${PODMAN_ENV_FILE}" "${PODMAN_CONTAINER_IMAGE}" > "${PODMAN_LOG_FILE}" 2>&1 &
 set +x && echo -e "[+] Waiting 30s..." && sleep 30
 #Get logs
 PODMAN_ID="$(sudo podman ps -qf name=${PODMAN_CONTAINER_NAME})" && export PODMAN_ID="${PODMAN_ID}"
