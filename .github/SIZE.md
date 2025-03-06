@@ -1,5 +1,5 @@
 ```mathematica
-2.9M └─┬ main
+2.8M └─┬ main
 932K   ├─┬ wordium
 904K   │ ├─┬ Deps
 440K   │ │ ├── g_api.txt
@@ -127,10 +127,6 @@
 8.0K   │ ├── main.go
 4.0K   │ ├── go.mod
 4.0K   │ └── README.md
- 20K   ├─┬ fget
-8.0K   │ ├── main.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
  20K   ├─┬ certstream
 8.0K   │ ├── main.go
 4.0K   │ ├── server_config.yaml
@@ -144,13 +140,6 @@
 4.0K   │ ├── go.mod
 4.0K   │ └── README.md
  16K   ├─┬ rate-limit-checker
-4.0K   │ ├── main.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 16K   ├─┬ cutlines
-8.0K   │ ├── main.go
-4.0K   │ └── README.md
- 16K   ├─┬ comb
 4.0K   │ ├── main.go
 4.0K   │ ├── go.mod
 4.0K   │ └── README.md
