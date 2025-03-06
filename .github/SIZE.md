@@ -1,5 +1,5 @@
 ```mathematica
-2.7M └─┬ main
+1.9M └─┬ main
 932K   ├─┬ wordium
 904K   │ ├─┬ Deps
 440K   │ │ ├── g_api.txt
@@ -9,10 +9,6 @@
 4.0K   │ │ └── README.md
  20K   │ ├── wordium.sh
 4.0K   │ └── README.md
-748K   ├─┬ Resources
-744K   │ └─┬ nmap
-732K   │   ├── Services.md
-8.0K   │   └── README.md
 664K   ├─┬ misc
 224K   │ ├─┬ Github
 216K   │ │ ├─┬ Runners
@@ -110,22 +106,6 @@
  12K   │ └── README.md
  28K   ├─┬ resdns
  20K   │ ├── resdns.sh
-4.0K   │ └── README.md
- 24K   ├─┬ wpjson-parser
- 12K   │ ├── README.md
-4.0K   │ ├── main.go
-4.0K   │ └── go.mod
- 24K   ├─┬ subxtract
-8.0K   │ ├── subxtract.go
-8.0K   │ ├── README.md
-4.0K   │ └── subxtract.sh
- 20K   ├─┬ certstream
-8.0K   │ ├── main.go
-4.0K   │ ├── server_config.yaml
-4.0K   │ └── README.md
- 16K   ├─┬ tok
-4.0K   │ ├── main.go
-4.0K   │ ├── go.mod
 4.0K   │ └── README.md
  12K   ├── README.md
 4.0K   └── LICENSE
