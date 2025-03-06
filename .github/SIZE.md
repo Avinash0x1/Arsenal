@@ -1,5 +1,5 @@
 ```mathematica
-2.8M └─┬ main
+2.7M └─┬ main
 932K   ├─┬ wordium
 904K   │ ├─┬ Deps
 440K   │ │ ├── g_api.txt
@@ -127,22 +127,6 @@
 4.0K   │ ├── main.go
 4.0K   │ ├── go.mod
 4.0K   │ └── README.md
- 16K   ├─┬ scopegen
-4.0K   │ ├── scopegen.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 16K   ├─┬ rate-limit-checker
-4.0K   │ ├── main.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 12K   ├─┬ scopeview
-4.0K   │ ├── scopeview.sh
-4.0K   │ └── README.md
- 12K   ├─┬ quotes-escaper
-4.0K   │ ├── main.go
-4.0K   │ └── README.md
  12K   ├── README.md
-8.0K   ├─┬ tldgen
-4.0K   │ └── tldgen.sh
 4.0K   └── LICENSE
 ```
