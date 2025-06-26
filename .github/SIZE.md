@@ -1,5 +1,5 @@
 ```mathematica
-2.9M └─┬ main
+1.9M └─┬ main
 932K   ├─┬ wordium
 904K   │ ├─┬ Deps
 440K   │ │ ├── g_api.txt
@@ -9,11 +9,7 @@
 4.0K   │ │ └── README.md
  20K   │ ├── wordium.sh
 4.0K   │ └── README.md
-748K   ├─┬ Resources
-744K   │ └─┬ nmap
-732K   │   ├── Services.md
-8.0K   │   └── README.md
-660K   ├─┬ misc
+664K   ├─┬ misc
 224K   │ ├─┬ Github
 216K   │ │ ├─┬ Runners
  84K   │ │ │ ├─┬ Ubuntu
@@ -39,7 +35,7 @@
 8.0K   │ │ │ └─┬ macOS
 4.0K   │ │ │   └── 0xf_gh_runner_macos_debug.yaml
 4.0K   │ │ └── GIT.md
-184K   │ ├─┬ Linux
+188K   │ ├─┬ Linux
  88K   │ │ ├─┬ Debian
  20K   │ │ │ ├── install_bb_tools_x86_64.sh
  20K   │ │ │ ├── install_bb_tools_aarch64.sh
@@ -52,7 +48,7 @@
 4.0K   │ │ │ ├── install_chrome_aarch64.sh
 4.0K   │ │ │ └── bootstrap.sh
  32K   │ │ ├── install_bb_tools.sh
- 20K   │ │ ├── install_dev_tools.sh
+ 24K   │ │ ├── install_dev_tools.sh
  12K   │ │ ├── sshd_config_passwordless
  12K   │ │ ├── sshd_config
 4.0K   │ │ ├── install_cosmocc.sh
@@ -111,57 +107,6 @@
  28K   ├─┬ resdns
  20K   │ ├── resdns.sh
 4.0K   │ └── README.md
- 24K   ├─┬ wpjson-parser
- 12K   │ ├── README.md
-4.0K   │ ├── main.go
-4.0K   │ └── go.mod
- 24K   ├─┬ subxtract
-8.0K   │ ├── subxtract.go
-8.0K   │ ├── README.md
-4.0K   │ └── subxtract.sh
- 20K   ├─┬ inscope
-8.0K   │ ├── main.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 20K   ├─┬ getJS
-8.0K   │ ├── main.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 20K   ├─┬ fget
-8.0K   │ ├── main.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 20K   ├─┬ certstream
-8.0K   │ ├── main.go
-4.0K   │ ├── server_config.yaml
-4.0K   │ └── README.md
- 16K   ├─┬ tok
-4.0K   │ ├── main.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 16K   ├─┬ scopegen
-4.0K   │ ├── scopegen.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 16K   ├─┬ rate-limit-checker
-4.0K   │ ├── main.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 16K   ├─┬ cutlines
-8.0K   │ ├── main.go
-4.0K   │ └── README.md
- 16K   ├─┬ comb
-4.0K   │ ├── main.go
-4.0K   │ ├── go.mod
-4.0K   │ └── README.md
- 12K   ├─┬ scopeview
-4.0K   │ ├── scopeview.sh
-4.0K   │ └── README.md
- 12K   ├─┬ quotes-escaper
-4.0K   │ ├── main.go
-4.0K   │ └── README.md
  12K   ├── README.md
-8.0K   ├─┬ tldgen
-4.0K   │ └── tldgen.sh
 4.0K   └── LICENSE
 ```
